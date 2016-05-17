@@ -7,6 +7,9 @@ has a *. Local commits are listed below the ref name. Each ref is
 trailed by a number in parens which is the number of commits by which
 it trails the baseline.
 
+This is a great thing to run in a dedicated terminal under `watch(1)`
+or something similar.
+
 ## git-smash
 
 Stomps on the current commit metadata date and author (plus whatever
