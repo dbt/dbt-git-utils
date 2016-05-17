@@ -1,0 +1,37 @@
+#!/usr/bin/env python
+
+import subprocess
+import sys
+
+if len(sys.argv) > 1:
+    upstream = sys.argv[1]
+else:
+    print "Must supply upstream branch as arg"
+    sys.exit(1)
+
+def popen(*args):
+    return subprocess.check_output(args)
+
+merged = []
+
+for line in popen("git", "branch").split("\n"):
+    tag = line.strip()
+    if not tag:
+        continue
+    head = False
+    ref = tag
+    if ref[:2] == "* ":
+        head = True
+        ref = tag[2:]
+        tag ="*" + ref
+    count = subprocess.check_output(["git", "rev-list", upstream, "^" + ref, "--count"]).strip()
+    tag = "%s(%s)" % (tag, count)
+        
+    if subprocess.call(["git", "merge-base", "--is-ancestor", ref, upstream]) == 0:
+        merged.append(tag)
+    else:
+        print "==>", tag
+        print subprocess.check_output(["git", "log", "%s..%s" % (upstream, ref), "--reverse", "--format=tformat:  %h %s"])
+
+if merged:
+    print "Merged:", " ".join(merged)
