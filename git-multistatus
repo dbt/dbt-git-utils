@@ -9,12 +9,12 @@ else:
     print "Must supply upstream branch as arg"
     sys.exit(1)
 
-def popen(*args):
-    return subprocess.check_output(args)
-
 merged = []
 
-for line in popen("git", "branch").split("\n"):
+def commit_distance(trunk, leaf):
+    return int(subprocess.check_output(["git", "rev-list", leaf, "^" + trunk, "--count"]).strip())
+
+for line in subprocess.check_output(["git", "branch"]).split("\n"):
     tag = line.strip()
     if not tag:
         continue
@@ -25,11 +25,12 @@ for line in popen("git", "branch").split("\n"):
         ref = tag[2:]
         tag ="*" + ref
 
+    # find the closest upstream source branch for our ref
     if len(upstreams) > 1:
-        upstreams.sort(key=lambda x: int(subprocess.check_output(["git", "rev-list", x, "^" + ref, "--count"]).strip()))
+        upstreams.sort(key=lambda x: commit_distance(x, ref))
     upstream = upstreams[0]
-    count = subprocess.check_output(["git", "rev-list", upstream, "^" + ref, "--count"]).strip()
-    tag = "%s(%s)" % (tag, count)
+    behind = commit_distance(ref, upstream)
+    tag = "%s(%d)" % (tag, behind)
         
     if subprocess.call(["git", "merge-base", "--is-ancestor", ref, upstream]) == 0:
         merged.append(tag)
