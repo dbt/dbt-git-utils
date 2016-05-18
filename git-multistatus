@@ -4,7 +4,7 @@ import subprocess
 import sys
 
 if len(sys.argv) > 1:
-    upstream = sys.argv[1]
+    upstreams = sys.argv[1:]
 else:
     print "Must supply upstream branch as arg"
     sys.exit(1)
@@ -24,6 +24,10 @@ for line in popen("git", "branch").split("\n"):
         head = True
         ref = tag[2:]
         tag ="*" + ref
+
+    if len(upstreams) > 1:
+        upstreams.sort(key=lambda x: int(subprocess.check_output(["git", "rev-list", x, "^" + ref, "--count"]).strip()))
+    upstream = upstreams[0]
     count = subprocess.check_output(["git", "rev-list", upstream, "^" + ref, "--count"]).strip()
     tag = "%s(%s)" % (tag, count)
         
