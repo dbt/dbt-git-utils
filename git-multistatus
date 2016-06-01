@@ -11,13 +11,24 @@ else:
 
 merged = []
 
+_distance_cache = {}
+
 def commit_distance(trunk, leaf):
-    return int(subprocess.check_output(["git", "rev-list", leaf, "^" + trunk, "--count"]).strip())
+    if (trunk, leaf) in _distance_cache:
+        return _distance_cache[(trunk, leaf)]
+    val = int(subprocess.check_output(["git", "rev-list", leaf, "^" + trunk, "--count"]).strip())
+    _distance_cache[(trunk, leaf)] = val
+    return val
 
 for line in subprocess.check_output(["git", "branch"]).split("\n"):
     tag = line.strip()
     if not tag:
         continue
+    if tag[:3] == "* (":
+        if tag[:8] == "* (HEAD ":
+            tag = "* HEAD"
+        else:
+            continue
     head = False
     ref = tag
     if ref[:2] == "* ":
@@ -27,7 +38,7 @@ for line in subprocess.check_output(["git", "branch"]).split("\n"):
 
     # find the closest upstream source branch for our ref
     if len(upstreams) > 1:
-        upstreams.sort(key=lambda x: commit_distance(x, ref))
+        upstreams.sort(key=lambda x: (commit_distance(x, ref), commit_distance(ref, x)))
     upstream = upstreams[0]
     behind = commit_distance(ref, upstream)
     tag = "%s(%d)" % (tag, behind)
