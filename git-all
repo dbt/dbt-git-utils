@@ -1,0 +1,33 @@
+#!/usr/bin/env zsh
+
+cmd=(git submodule foreach --quiet)
+if [[ "$1" == "--recursive" ]]; then
+    cmd += ("$1")
+    shift
+fi
+
+if [[ -z "$@" ]]; then
+    echo "Command required" >&2
+    exit 1
+fi
+
+cmd+=(pwd)
+
+outputs=$(mktemp -d)
+function cleanup() {
+    rm -r "${outputs}"
+}
+trap cleanup EXIT
+
+dirs=($("${cmd[@]}"))
+count="${#dirs}"
+for (( i = 1; i <= count; i++ )); do
+    d="${dirs[$i]}"
+    (cd "$d" && ${SHELL} -c "$@" || :) > "${outputs}/$i" &
+done
+wait
+for (( i = 1; i <= count; i++ )); do
+    d="${dirs[$i]}"
+    echo "==> ${d#${PWD}/}"
+    cat "${outputs}/$i"
+done
