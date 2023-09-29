@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import subprocess
 import sys
@@ -6,7 +6,7 @@ import sys
 if len(sys.argv) > 1:
     upstreams = sys.argv[1:]
 else:
-    print "Must supply upstream branch as arg"
+    print("Must supply upstream branch as arg")
     sys.exit(1)
 
 merged = []
@@ -16,11 +16,11 @@ _distance_cache = {}
 def commit_distance(trunk, leaf):
     if (trunk, leaf) in _distance_cache:
         return _distance_cache[(trunk, leaf)]
-    val = int(subprocess.check_output(["git", "rev-list", leaf, "^" + trunk, "--count"]).strip())
+    val = int(subprocess.check_output(["git", "rev-list", leaf, "^" + trunk, "--count"]).decode().strip())
     _distance_cache[(trunk, leaf)] = val
     return val
 
-for line in subprocess.check_output(["git", "branch"]).split("\n"):
+for line in subprocess.check_output(["git", "branch"]).decode().split("\n"):
     tag = line.strip()
     if not tag:
         continue
@@ -46,8 +46,8 @@ for line in subprocess.check_output(["git", "branch"]).split("\n"):
     if subprocess.call(["git", "merge-base", "--is-ancestor", ref, upstream]) == 0:
         merged.append(tag)
     else:
-        print "==>", tag
-        print subprocess.check_output(["git", "log", "%s..%s" % (upstream, ref), "--reverse", "--format=tformat:  %h %s"])
+        print("==>", tag)
+        print(subprocess.check_output(["git", "log", "%s..%s" % (upstream, ref), "--reverse", "--format=tformat:  %h %s"]).decode())
 
 if merged:
-    print "Merged:", " ".join(merged)
+    print("Merged:", " ".join(merged))
